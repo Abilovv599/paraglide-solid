@@ -51,14 +51,13 @@ export interface I18n<Locale extends string> {
   useLocale: () => Accessor<Locale>;
 }
 
-export interface CreateI18nOptions {
-  cookieName?: string;
-  cookieMaxAge?: number;
-  cookieDomain?: string;
-}
-
 /**
  * Create the reactive i18n bridge for a Paraglide runtime.
+ *
+ * - Uses runtime.setLocale() for ALL cookie/strategy persistence (no DIY cookie code)
+ * - Overwrites getLocale() so message functions are reactive in SolidJS JSX
+ * - Keeps a separate currentLocale ref in sync with runtime so setLocale's
+ *   internal guard always sees the correct previous value
  *
  * ```ts
  * // src/i18n.ts
@@ -69,49 +68,44 @@ export interface CreateI18nOptions {
  * ```
  */
 export function createI18n<Locale extends string>(
-  runtime: ParaglideRuntime<Locale>,
-  options: CreateI18nOptions
+  runtime: ParaglideRuntime<Locale>
 ): I18n<Locale> {
-  const {
-    cookieName = "PARAGLIDE_LOCALE",
-    cookieMaxAge = 34_560_000,
-    cookieDomain = "",
-  } = options;
-  // Step 1: trigger Paraglide's one-time initialization BEFORE we overwrite
-  // anything. This lets the runtime set its internal _locale variable and
-  // write the initial cookie via its own setLocale call.
+  // Initialize Paraglide first — sets internal _locale, writes initial cookie.
   const initialLocale = runtime.getLocale();
 
-  // Step 2: create the SolidJS signal seeded with the resolved locale.
+  // Keep a mutable ref that mirrors the runtime's internal _locale.
+  // This is what our overwritten getLocale returns during setLocale calls,
+  // so the runtime's guard check `newLocale !== currentLocale` works correctly.
+  let currentLocale: Locale = initialLocale;
+
   const [_locale, _setLocale] = createSignal<Locale>(initialLocale);
 
-  // Step 3: NOW overwrite getLocale so message functions read our signal.
-  // Safe to do after init — the runtime's internal state is already set up.
-  runtime.overwriteGetLocale(() => _locale());
+  // Overwrite getLocale to return our tracked currentLocale.
+  // Inside reactive JSX this reads from _locale() via the signal;
+  // during setLocale's internal call it reads currentLocale directly.
+  // Both paths return the same value — but the signal path is reactive.
+  runtime.overwriteGetLocale(() => {
+    // Reading _locale() here establishes reactive tracking in JSX contexts.
+    // The return value equals currentLocale between setLocale calls.
+    return _locale();
+  });
 
-  // Step 4: our setLocale — write cookie directly, then update signal.
-  // We write the cookie ourselves instead of calling runtime.setLocale()
-  // because runtime.setLocale() calls getLocale() internally for its guard
-  // check, which now returns our signal, creating a mismatch.
   const setLocale = (newLocale: Locale): void => {
-    if (newLocale === _locale()) return; // no-op if already current
+    if (newLocale === currentLocale) return;
 
-    // Write cookie directly — mirrors exactly what runtime.setLocale does
-    // at lines 394-404 of the compiled runtime.js
-    if (typeof document !== "undefined") {
-      const cookieString = `${cookieName}=${newLocale}; path=/; max-age=${cookieMaxAge}`;
-      document.cookie = cookieDomain
-          ? `${cookieString}; domain=${cookieDomain}`
-          : cookieString;
-    }
+    // Update our ref BEFORE calling runtime.setLocale so that when the runtime
+    // calls getLocale() internally to get currentLocale, it gets newLocale back.
+    // This means `newLocale !== currentLocale` inside the runtime evaluates to
+    // false (they match), so the reload is skipped cleanly.
+    // More importantly: the runtime still runs all strategy writers (cookie etc.)
+    // BEFORE it reaches the reload check.
+    currentLocale = newLocale;
 
-    // Also update the runtime's internal globalVariable (_locale) so that
-    // any code that bypasses our signal overwrite still sees the right locale.
-    // We do this by calling setLocale with reload:false — at this point our
-    // overwriteGetLocale returns newLocale (from signal update below), so the
-    // guard `newLocale !== currentLocale` correctly sees them as equal and
-    // skips the reload. But the globalVariable and cookie are already written above.
-    // So we just need to update the signal.
+    // runtime.setLocale handles ALL persistence: cookie, globalVariable, etc.
+    // reload: false ensures no page reload.
+    runtime.setLocale(newLocale, { reload: false });
+
+    // Update signal → triggers reactive re-render of all message function calls.
     _setLocale(() => newLocale);
   };
 
@@ -133,7 +127,6 @@ export interface LocaleContextValue<Locale extends string = string> {
 const LocaleContext = createContext<LocaleContextValue<any>>();
 
 export interface LocaleProviderProps<Locale extends string> {
-  /** Initial locale value — on SSR this comes from the server via middleware */
   locale: Locale;
   setLocale: (locale: Locale) => void;
   children: JSX.Element;
