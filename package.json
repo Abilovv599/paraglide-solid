@@ -1,0 +1,40 @@
+{
+  "name": "paraglide-solid",
+  "version": "0.1.0",
+  "description": "SolidJS + SolidStart integration for @inlang/paraglide-js. Reactive locale signals, SSR-safe context, and middleware for SolidStart.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "solid": "./src/index.tsx",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    },
+    "./middleware": {
+      "import": "./dist/middleware.js",
+      "types": "./dist/middleware.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@inlang/paraglide-js": ">=2.0.0",
+    "solid-js": ">=1.8.0"
+  },
+  "devDependencies": {
+    "solid-js": "^1.9.11",
+    "typescript": "^5.9.3",
+    "vite-plugin-solid": "^2.11.10"
+  },
+  "keywords": ["paraglide", "solid", "solidstart", "i18n", "inlang"],
+  "license": "MIT"
+}
