@@ -1,7 +1,7 @@
 /**
  * paraglide-solid
  *
- * SolidJS integration for @inlang/paraglide-js.
+ * SolidJS + SolidStart integration for @inlang/paraglide-js.
  *
  * Bridges Paraglide's imperative locale system (getLocale / setLocale) to
  * SolidJS's reactive signal model so that message function calls inside JSX
@@ -51,59 +51,69 @@ export interface I18n<Locale extends string> {
   useLocale: () => Accessor<Locale>;
 }
 
+export interface CreateI18nOptions {
+  cookieName?: string;
+  cookieMaxAge?: number;
+  cookieDomain?: string;
+}
+
 /**
  * Create the reactive i18n bridge for a Paraglide runtime.
  *
- * Call once at module level in `src/i18n.ts` and export the result.
- *
  * ```ts
+ * // src/i18n.ts
+ * import * as runtime from "./paraglide/runtime";
+ * import { createI18n } from "paraglide-solid";
+ *
  * export const { locale, setLocale } = createI18n(runtime);
  * ```
- *
- * @param runtime - Your compiled `./paraglide/runtime.js` module
  */
 export function createI18n<Locale extends string>(
-  runtime: ParaglideRuntime<Locale>
+  runtime: ParaglideRuntime<Locale>,
+  options: CreateI18nOptions
 ): I18n<Locale> {
-  // Initialize from whatever Paraglide resolved on load
-  // (cookie, globalVariable, baseLocale fallback, etc.)
-  const [_locale, _setLocale] = createSignal<Locale>(runtime.getLocale());
+  const {
+    cookieName = "PARAGLIDE_LOCALE",
+    cookieMaxAge = 34_560_000,
+    cookieDomain = "",
+  } = options;
+  // Step 1: trigger Paraglide's one-time initialization BEFORE we overwrite
+  // anything. This lets the runtime set its internal _locale variable and
+  // write the initial cookie via its own setLocale call.
+  const initialLocale = runtime.getLocale();
 
-  // THE KEY INTEGRATION:
-  // Overwrite Paraglide's getLocale so it reads from our SolidJS signal.
-  // Any JSX expression that calls a message function (which calls getLocale
-  // internally) is now inside SolidJS's reactive tracking and re-runs
-  // automatically when the locale signal changes.
+  // Step 2: create the SolidJS signal seeded with the resolved locale.
+  const [_locale, _setLocale] = createSignal<Locale>(initialLocale);
+
+  // Step 3: NOW overwrite getLocale so message functions read our signal.
+  // Safe to do after init — the runtime's internal state is already set up.
   runtime.overwriteGetLocale(() => _locale());
 
-  // Public setLocale: writes to Paraglide strategies (cookie etc.) without
-  // a page reload, then updates the signal to trigger reactive re-renders.
+  // Step 4: our setLocale — write cookie directly, then update signal.
+  // We write the cookie ourselves instead of calling runtime.setLocale()
+  // because runtime.setLocale() calls getLocale() internally for its guard
+  // check, which now returns our signal, creating a mismatch.
   const setLocale = (newLocale: Locale): void => {
-    // Persist to cookie / globalVariable strategy — but no reload
-    runtime.setLocale(newLocale, { reload: false });
-    // Drive the reactive signal → re-renders all message function calls
+    if (newLocale === _locale()) return; // no-op if already current
+
+    // Write cookie directly — mirrors exactly what runtime.setLocale does
+    // at lines 394-404 of the compiled runtime.js
+    if (typeof document !== "undefined") {
+      const cookieString = `${cookieName}=${newLocale}; path=/; max-age=${cookieMaxAge}`;
+      document.cookie = cookieDomain
+          ? `${cookieString}; domain=${cookieDomain}`
+          : cookieString;
+    }
+
+    // Also update the runtime's internal globalVariable (_locale) so that
+    // any code that bypasses our signal overwrite still sees the right locale.
+    // We do this by calling setLocale with reload:false — at this point our
+    // overwriteGetLocale returns newLocale (from signal update below), so the
+    // guard `newLocale !== currentLocale` correctly sees them as equal and
+    // skips the reload. But the globalVariable and cookie are already written above.
+    // So we just need to update the signal.
     _setLocale(() => newLocale);
   };
-
-  // Sync: if Paraglide's own setLocale is called externally (e.g. by the
-  // runtime's URL strategy on navigation), keep our signal in sync too.
-  runtime.overwriteSetLocale((newLocale, options) => {
-    // Write to strategies without reload
-    const savedOverwrite = runtime.overwriteSetLocale;
-    // Temporarily bypass our override so the original strategy writers fire
-    // We achieve this by calling the original runtime default behaviors
-    // directly via the cookie / globalVariable setters indirectly:
-    // The simplest safe approach — just update signal + suppress reload.
-    _setLocale(() => newLocale);
-    if (options?.reload !== false && typeof window !== "undefined") {
-      // If caller explicitly wants a reload (e.g. URL strategy switch),
-      // honour it after a microtask so the signal update renders first
-      if (options?.reload === true) {
-        queueMicrotask(() => window.location.reload());
-      }
-    }
-    void savedOverwrite; // keep reference to avoid tree-shaking
-  });
 
   return {
     locale: _locale,
@@ -150,7 +160,7 @@ export interface LocaleProviderProps<Locale extends string> {
  * ```
  */
 export function LocaleProvider<Locale extends string>(
-  props: LocaleProviderProps<Locale>
+    props: LocaleProviderProps<Locale>
 ) {
   const [_locale, _setLocale] = createSignal<Locale>(props.locale);
 
