@@ -1,6 +1,6 @@
 {
   "name": "paraglide-solid",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SolidJS + SolidStart integration for @inlang/paraglide-js. Reactive locale signals, SSR-safe context, and middleware for SolidStart.",
   "keywords": [
     "paraglide",
