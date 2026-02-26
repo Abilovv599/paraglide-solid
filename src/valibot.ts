@@ -1,5 +1,5 @@
 /**
- * @inlang/paraglide-solid/valibot
+ * paraglide-solid/valibot
  *
  * Generic Valibot error translation for Paraglide.
  *
@@ -14,8 +14,8 @@
  * ```ts
  * // src/i18n.ts
  * import * as m from "./paraglide/messages";
- * import { createI18n } from "@inlang/paraglide-solid";
- * import { createErrorTranslator } from "@inlang/paraglide-solid/valibot";
+ * import { createI18n } from "paraglide-solid";
+ * import { createErrorTranslator } from "paraglide-solid/valibot";
  *
  * export const { locale, setLocale } = createI18n(runtime);
  * export const { errorKey, errorMessage } = createErrorTranslator(m);

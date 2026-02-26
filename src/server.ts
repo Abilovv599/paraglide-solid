@@ -1,5 +1,5 @@
 /**
- * @inlang/paraglide-solid/server
+ * paraglide-solid/server
  *
  * Server-side utilities for SolidStart.
  *
@@ -12,8 +12,8 @@
  * ```ts
  * // src/i18n.ts
  * import * as runtime from "./paraglide/runtime";
- * import { createI18n } from "@inlang/paraglide-solid";
- * import { createServerI18n } from "@inlang/paraglide-solid/server";
+ * import { createI18n } from "paraglide-solid";
+ * import { createServerI18n } from "paraglide-solid/server";
  *
  * // Client-side reactive bridge (used in browser)
  * export const { locale, setLocale } = createI18n(runtime);
