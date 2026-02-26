@@ -18,16 +18,11 @@
  * ```
  */
 
-import {
-  createSignal,
-  createContext,
-  useContext,
-  type Accessor,
-  type JSX,
-} from "solid-js";
-import type { I18nInstance, ParaglideRuntime } from "./types";
+import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
+import { type Accessor, createContext, createSignal, type JSX, useContext } from "solid-js";
+import type { I18nInstance } from "./types";
 
-// ─── createParaglide ──────────────────────────────────────────────────────────
+// ─── createI18n ──────────────────────────────────────────────────────────
 
 /**
  * Create the reactive Paraglide bridge for SolidJS.
@@ -36,18 +31,18 @@ import type { I18nInstance, ParaglideRuntime } from "./types";
  *
  * ```ts
  * // src/i18n.ts
- * import { createParaglide } from "paraglide-solid";
+ * import { createI18n } from "paraglide-solid";
  * import * as runtime from "./paraglide/runtime";
  *
- * export const i18n = createParaglide(runtime);
+ * export const i18n = createI18n(runtime);
  *
  * // Destructure what you need:
  * export const { locale, setLocale } = i18n;
  * ```
  */
-export function createParaglide<Locale extends string>(runtime: ParaglideRuntime<Locale>): I18nInstance<Locale> {
+export function createI18n<Locale extends string>(runtime: ParaglideRuntime): I18nInstance<Locale> {
   // Trigger Paraglide's one-time initialization before we overwrite anything.
-  const initialLocale = runtime.getLocale();
+  const initialLocale: Locale = runtime.getLocale();
   let currentLocale: Locale = initialLocale;
 
   // Single signal — shared by the returned accessors AND the context.
@@ -70,21 +65,20 @@ export function createParaglide<Locale extends string>(runtime: ParaglideRuntime
   }>();
 
   const I18nProvider = (props: { children: JSX.Element }) => (
-      <I18nContext.Provider value={{ locale: _locale, setLocale }}>
-        {props.children}
-      </I18nContext.Provider>
+    <I18nContext.Provider value={{ locale: _locale, setLocale }}>
+      {props.children}
+    </I18nContext.Provider>
   );
 
   const useI18n = () => {
     const ctx = useContext(I18nContext);
-    if (!ctx) throw new Error(
+    if (!ctx)
+      throw new Error(
         "[paraglide-solid] useI18n() called outside <I18nProvider>.\n" +
-        "Wrap your app root with <I18nProvider>."
-    );
+          "Wrap your app root with <I18nProvider>.",
+      );
     return ctx;
   };
 
   return { locale: _locale, setLocale, I18nProvider, useI18n };
 }
-
-export type { ParaglideRuntime } from "./types";

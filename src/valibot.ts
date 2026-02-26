@@ -41,11 +41,7 @@
  * ```
  */
 
-/**
- * Minimal shape of a compiled Paraglide messages module.
- * Each export is a function that takes optional inputs and returns a string.
- */
-export type ParaglideMessagesModule = Record<string, ((inputs?: Record<string, unknown>, options?: { locale?: string }) => string) | unknown>;
+import type { MessageFunction } from "@inlang/paraglide-js";
 
 /**
  * Create a `translateError` function bound to your Paraglide messages module.
@@ -73,13 +69,13 @@ export type ParaglideMessagesModule = Record<string, ((inputs?: Record<string, u
  * ```
  */
 export function createErrorTranslator(
-    messages: ParaglideMessagesModule
+  messages: Record<string, MessageFunction>,
 ): (error: string) => string {
-    return (error: string): string => {
-        const fn = messages[error];
-        if (typeof fn === "function") {
-            return fn() as string;
-        }
-        return error;
-    };
+  return (error: string): string => {
+    const fn = messages[error];
+    if (typeof fn === "function") {
+      return fn() as string;
+    }
+    return error;
+  };
 }

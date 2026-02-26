@@ -22,21 +22,10 @@
  * 3. Sets the `Set-Cookie` header on the response when the locale changes
  */
 
-import { setLocaleFromRequest, LOCALE_KEY } from "./server";
-import type { ParaglideRuntime } from "./types";
-
-/**
- * Minimal SolidStart middleware event shape.
- */
-interface MiddlewareEvent {
-  request: Request;
-  locals: Record<string, unknown>;
-  response: {
-    headers: Headers;
-  };
-}
-
-type MiddlewareFn = (event: MiddlewareEvent) => void | Promise<void>;
+import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
+import type { MiddlewareFn } from "@solidjs/start/middleware";
+import type { FetchEvent as MiddlewareEvent } from "@solidjs/start/server";
+import { LOCALE_KEY, setLocaleFromRequest } from "./server";
 
 /**
  * Create a SolidStart `onRequest` middleware handler that detects and stores
@@ -45,8 +34,8 @@ type MiddlewareFn = (event: MiddlewareEvent) => void | Promise<void>;
  * @param runtime - Your compiled `./paraglide/runtime.js` module
  * @param options  - Optional configuration
  */
-export function createI18nMiddleware<Locale extends string>(
-  runtime: ParaglideRuntime<Locale>,
+export function createI18nMiddleware(
+  runtime: ParaglideRuntime,
   options: {
     /**
      * Cookie name to read/write the locale preference.
@@ -63,7 +52,7 @@ export function createI18nMiddleware<Locale extends string>(
      * @default false
      */
     refreshCookie?: boolean;
-  } = {}
+  } = {},
 ): MiddlewareFn {
   const {
     cookieName = "PARAGLIDE_LOCALE",
@@ -78,7 +67,7 @@ export function createI18nMiddleware<Locale extends string>(
     if (refreshCookie) {
       event.response.headers.append(
         "Set-Cookie",
-        `${cookieName}=${locale}; Path=/; Max-Age=${cookieMaxAge}; SameSite=Lax`
+        `${cookieName}=${locale}; Path=/; Max-Age=${cookieMaxAge}; SameSite=Lax`,
       );
     }
 
@@ -86,5 +75,3 @@ export function createI18nMiddleware<Locale extends string>(
     event.locals[LOCALE_KEY] = locale;
   };
 }
-
-export type { MiddlewareEvent, MiddlewareFn };

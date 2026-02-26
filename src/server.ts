@@ -26,7 +26,7 @@
  * SolidStart's per-request event during SSR, and from the signal on the client.
  */
 
-import type { ParaglideRuntime } from "./types";
+import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
 
 /**
  * Minimal shape of SolidStart's `RequestEvent` that we depend on.
@@ -52,8 +52,8 @@ const LOCALE_KEY = "__paraglide_locale__";
  * @param getRequestEvent - SolidStart's `getRequestEvent` from `@solidjs/start/server`
  */
 export function createServerI18n<Locale extends string>(
-  runtime: ParaglideRuntime<Locale>,
-  getRequestEvent: GetRequestEvent
+  runtime: ParaglideRuntime,
+  getRequestEvent: GetRequestEvent,
 ): void {
   runtime.overwriteGetLocale(() => {
     const event = getRequestEvent();
@@ -85,7 +85,7 @@ export function createServerI18n<Locale extends string>(
 export function setLocaleFromRequest<Locale extends string>(
   request: Request,
   event: RequestEvent,
-  runtime: ParaglideRuntime<Locale>
+  runtime: ParaglideRuntime,
 ): Locale {
   // Use Paraglide's own cookie / accept-language / URL extraction
   let locale: Locale = runtime.baseLocale as Locale;
