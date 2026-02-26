@@ -16,11 +16,18 @@
     "./middleware": {
       "import": "./dist/middleware.js",
       "types": "./dist/middleware.d.ts"
+    },
+    "./valibot": {
+      "import": "./dist/valibot.js",
+      "types": "./dist/valibot.d.ts"
     }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -35,6 +42,13 @@
     "typescript": "^5.9.3",
     "vite-plugin-solid": "^2.11.10"
   },
-  "keywords": ["paraglide", "solid", "solidstart", "i18n", "inlang"],
+  "keywords": [
+    "paraglide",
+    "solid",
+    "solidstart",
+    "i18n",
+    "inlang",
+    "valibot"
+  ],
   "license": "MIT"
 }

@@ -8,7 +8,7 @@ SolidJS + SolidStart integration for [`@inlang/paraglide-js`](https://inlang.com
 
 Paraglide message functions call `getLocale()` internally. This package overwrites `getLocale` to read from a SolidJS signal — so any JSX expression that calls a message function is automatically reactive and re-renders when the locale changes. No page reload needed.
 
-On the server (SolidStart SSR), locale is read from `event.locals` which is populated by the middleware once per request, preventing cross-request pollution.
+There is a **single signal** for the entire app. `locale`, `setLocale`, `<I18nProvider>` and `useI18n()` all share it — no duplication, no sync issues.
 
 ---
 
@@ -41,8 +41,12 @@ With Vite, the plugin handles this automatically:
 ```ts
 // vite.config.ts
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
+
 export default defineConfig({
-  plugins: [solid(), paraglideVitePlugin({ project: "./project.inlang", outdir: "./src/paraglide" })],
+  plugins: [
+    solid(),
+    paraglideVitePlugin({ project: "./project.inlang", outdir: "./src/paraglide" }),
+  ],
 });
 ```
 
@@ -50,10 +54,11 @@ export default defineConfig({
 
 ```ts
 // src/i18n.ts
-import * as runtime from "./paraglide/runtime";
 import { createI18n } from "paraglide-solid";
+import * as runtime from "./paraglide/runtime";
 
-export const { locale, setLocale, useLocale } = createI18n(runtime);
+const i18n = createI18n(runtime);
+export const { locale, setLocale, I18nProvider, useI18n } = i18n;
 ```
 
 ### 3. Use in components
@@ -66,10 +71,8 @@ export default function App() {
   return (
     <div>
       <h1>{m.title()}</h1>
-      <p>{m["labelName"]()}</p>
-
-      <button onClick={() => setLocale("de")}>
-        {locale() === "en" ? "Switch to DE" : "Switch to EN"}
+      <button onClick={() => setLocale(locale() === "en" ? "de" : "en")}>
+        {locale() === "en" ? "🇩🇪 Deutsch" : "🇬🇧 English"}
       </button>
     </div>
   );
@@ -77,6 +80,120 @@ export default function App() {
 ```
 
 Message functions are reactive — they re-render automatically when `setLocale` is called.
+
+### Context (optional)
+
+If you prefer not to import `locale`/`setLocale` as singletons, wrap your app in `I18nProvider` and call `useI18n()` inside any component. Both use the **same underlying signal**.
+
+```tsx
+// src/app.tsx
+import { I18nProvider } from "./i18n";
+
+export default function App() {
+  return (
+    <I18nProvider>
+      <Router />
+    </I18nProvider>
+  );
+}
+```
+
+```tsx
+// Any component inside <I18nProvider>
+import { useI18n } from "./i18n";
+
+function LocaleSwitcher() {
+  const { locale, setLocale } = useI18n();
+  return (
+    <button onClick={() => setLocale(locale() === "en" ? "de" : "en")}>
+      {locale() === "en" ? "🇩🇪 Deutsch" : "🇬🇧 English"}
+    </button>
+  );
+}
+```
+
+---
+
+## Validation error translation
+
+For reactive validation errors, import `createErrorTranslator` from `paraglide-solid/valibot`. For now works only with validation libraries like: Valibot and Yup.
+
+### Setup
+
+```ts
+// src/i18n.ts
+import { createI18n } from "paraglide-solid";
+import { createErrorTranslator } from "paraglide-solid/valibot";
+import * as runtime from "./paraglide/runtime";
+import * as m from "./paraglide/messages";
+
+const i18n = createI18n(runtime);
+export const { locale, setLocale } = i18n;
+export const translateError = createErrorTranslator(m);
+```
+
+### Supported error shapes
+
+| Library | Error type | Supported           |
+|---------|---|---------------------|
+| Valibot | `string` | ✓                   |
+| Yup     | `string` | ✓ (⚠️NOT TESTED!!!) |
+
+### Schema — use keys instead of translated strings
+
+**Valibot:**
+```ts
+import * as v from "valibot";
+
+export const contactSchema = v.object({
+  name: v.pipe(
+    v.string("errNameRequired"),
+    v.minLength(2, "errNameMin"),
+  ),
+  email: v.pipe(
+    v.string(),
+    v.nonEmpty("errEmailRequired"),
+    v.email("errEmailInvalid"),
+  ),
+});
+```
+
+### Messages — add matching keys to your locale files
+
+```json
+// messages/en.json
+{
+  "errNameRequired": "Please enter your name.",
+  "errNameMin": "Name must be at least 2 characters long.",
+  "errEmailRequired": "Please enter your email address.",
+  "errEmailInvalid": "Please enter a valid email address."
+}
+```
+
+```json
+// messages/de.json
+{
+  "errNameRequired": "Bitte gib deinen Namen ein.",
+  "errNameMin": "Der Name muss mindestens 2 Zeichen lang sein.",
+  "errEmailRequired": "Bitte gib deine E-Mail-Adresse ein.",
+  "errEmailInvalid": "Bitte gib eine gültige E-Mail-Adresse ein."
+}
+```
+
+Then recompile: `npm run paraglide`
+
+### Component — use `translateError` when rendering errors
+
+```tsx
+import { translateError } from "../i18n";
+
+// Valibot
+<Show when={field.isTouched && field.errors}>
+  <p class="error-msg">{translateError(field.errors![0])}</p>
+</Show>
+```
+
+`translateError` looks up the key on the messages module at render time. If it matches a message key it calls that function reactively. Otherwise returns the string as-is.
 
 ---
 
@@ -88,11 +205,11 @@ Create `src/middleware.ts`:
 
 ```ts
 import { createMiddleware } from "@solidjs/start/middleware";
-import { createParaglideMiddleware } from "paraglide-solid/middleware";
+import { createI18nMiddleware } from "paraglide-solid/middleware";
 import * as runtime from "./paraglide/runtime";
 
 export default createMiddleware({
-  onRequest: createParaglideMiddleware(runtime),
+  onRequest: createI18nMiddleware(runtime),
 });
 ```
 
@@ -100,6 +217,7 @@ Register it in `app.config.ts`:
 
 ```ts
 import { defineConfig } from "@solidjs/start/config";
+
 export default defineConfig({
   middleware: "./src/middleware.ts",
 });
@@ -111,73 +229,47 @@ In your `src/i18n.ts`, additionally call `createServerI18n` so SSR message calls
 
 ```ts
 // src/i18n.ts
-import * as runtime from "./paraglide/runtime";
 import { createI18n } from "paraglide-solid";
 import { createServerI18n } from "paraglide-solid/server";
+import { createErrorTranslator } from "paraglide-solid/valibot";
 import { getRequestEvent } from "@solidjs/start/server";
+import * as runtime from "./paraglide/runtime";
+import * as m from "./paraglide/messages";
 
-// Client: reactive signal bridge
-export const { locale, setLocale } = createI18n(runtime);
+export const i18n = createI18n(runtime);
+export const { locale, setLocale } = i18n;
+export const translateError = createErrorTranslator(m);
 
-// Server: per-request locale from event.locals
+// Per-request locale resolution during SSR
 createServerI18n(runtime, getRequestEvent);
-```
-
-### Root layout with LocaleProvider
-
-For components that use `useLocaleContext()`:
-
-```tsx
-// src/app.tsx
-import { LocaleProvider } from "paraglide-solid";
-import { locale, setLocale } from "./i18n";
-
-export default function App() {
-  return (
-    <LocaleProvider locale={locale()} setLocale={setLocale}>
-      <Router />
-    </LocaleProvider>
-  );
-}
-```
-
-### Reading locale in a component via context
-
-```tsx
-import { useLocaleContext } from "paraglide-solid";
-
-function LocaleSwitcher() {
-  const { locale, setLocale } = useLocaleContext<"en" | "de">();
-  return (
-    <button onClick={() => setLocale(locale() === "en" ? "de" : "en")}>
-      {locale() === "en" ? "🇩🇪 Deutsch" : "🇬🇧 English"}
-    </button>
-  );
-}
 ```
 
 ---
 
 ## API
 
-### `createI18n(runtime)` → `{ locale, setLocale, useLocale }`
+### `createI18n(runtime)` → `I18nInstance`
 
-Creates the reactive bridge. Call once in `src/i18n.ts`.
+| Return         | Type | Description |
+|----------------|---|---|
+| `locale`       | `Accessor<Locale>` | Reactive locale signal |
+| `setLocale`    | `(locale: Locale) => void` | Updates signal + writes cookie, no page reload |
+| `I18nProvider` | `(props) => JSX.Element` | Context provider — same signal, no duplication |
+| `useI18n`      | `() => { locale, setLocale }` | Hook for components inside `<I18nProvider>` |
 
-| Return | Type | Description |
-|---|---|---|
-| `locale` | `Accessor<Locale>` | Reactive locale signal |
-| `setLocale` | `(locale: Locale) => void` | Updates signal + Paraglide strategies (no page reload) |
-| `useLocale` | `() => Accessor<Locale>` | Hook-style accessor, same as `locale` |
+### `createErrorTranslator(m)` → `(error) => string`
+
+From `paraglide-solid/valibot`. Pass your compiled `* as m` messages module.
+
+Accepts `string`, `{ message: string }`, `null`, or `undefined`. If the extracted string matches a message key it calls that function reactively. Otherwise returns the string as-is.
 
 ### `createServerI18n(runtime, getRequestEvent)`
 
-Overwrites Paraglide's `getLocale` to read from `event.locals` during SSR.
-Safe to call alongside `createI18n` — on the client `getRequestEvent` returns `undefined` and it falls back to the signal.
+From `paraglide-solid/server`. Overwrites Paraglide's `getLocale` to read from `event.locals` during SSR. Falls back gracefully on the client.
 
-### `createParaglideMiddleware(runtime, options?)`
+### `createI18nMiddleware(runtime, options?)`
 
-Returns a SolidStart `onRequest` handler. Options:
+From `paraglide-solid/middleware`. Returns a SolidStart `onRequest` handler.
 
 | Option | Default | Description |
 |---|---|---|
@@ -185,58 +277,16 @@ Returns a SolidStart `onRequest` handler. Options:
 | `cookieMaxAge` | `34560000` | Cookie expiry in seconds |
 | `refreshCookie` | `false` | Refresh cookie on every request |
 
-### `<LocaleProvider locale setLocale>`
-
-Context provider for SSR-safe locale passing. Wraps your app root.
-
-### `useLocaleContext<Locale>()`
-
-Read locale and setLocale from the nearest `<LocaleProvider>`. Throws if no provider found.
-
----
-
-## Reactive validation errors (Valibot + Formisch)
-
-Valibot schema error strings are captured at schema construction time. To make them translate when the locale changes, wrap the schema in a function and use SolidJS's keyed `<Show>` to remount the form:
-
-```tsx
-import { Show, createSignal } from "solid-js";
-import { createForm, Form, Field } from "@formisch/solid";
-import * as v from "valibot";
-import * as m from "./paraglide/messages";
-import { locale } from "./i18n";
-
-function buildSchema() {
-  return v.object({
-    name: v.pipe(v.string(m["errNameRequired"]()), v.minLength(2, m["errNameMin"]())),
-  });
-}
-
-export default function App() {
-  const [snapshot, setSnapshot] = createSignal({});
-
-  return (
-    // keyed remount when locale changes — buildSchema() re-runs with new locale
-    <Show when={locale()} keyed>
-      {() => {
-        const form = createForm({ schema: buildSchema(), initialInput: snapshot() });
-        return <Form of={form}>...</Form>;
-      }}
-    </Show>
-  );
-}
-```
-
 ---
 
 ## Migration from `@inlang/paraglide-solidstart`
 
-| Old | New |
-|---|---|
-| `import { useI18n } from "@inlang/paraglide-solidstart"` | `import { createI18n } from "paraglide-solid"` |
-| `useI18n().locale` | `locale` (signal from `createI18n`) |
-| `useI18n().setLocale("de")` | `setLocale("de")` |
-| Middleware from `@inlang/paraglide-solidstart/middleware` | `createParaglideMiddleware` from `paraglide-solid/middleware` |
+| Old | New                                                           |
+|---|---------------------------------------------------------------|
+| `import { useI18n } from "@inlang/paraglide-solidstart"` | `import { createI18n } from "paraglide-solid"`           |
+| `useI18n().locale` | `locale` (signal from `createI18n`)                              |
+| `useI18n().setLocale("de")` | `setLocale("de")`                                             |
+| Middleware from `@inlang/paraglide-solidstart/middleware` | `createI18nMiddleware` from `paraglide-solid/middleware` |
 
 ---
 

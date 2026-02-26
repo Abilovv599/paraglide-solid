@@ -8,11 +8,11 @@
  * ```ts
  * // src/middleware.ts  (SolidStart entry point for server middleware)
  * import { createMiddleware } from "@solidjs/start/middleware";
- * import { createParaglideMiddleware } from "paraglide-solid/middleware";
+ * import { createI18nMiddleware } from "paraglide-solid/middleware";
  * import * as runtime from "./paraglide/runtime";
  *
  * export default createMiddleware({
- *   onRequest: createParaglideMiddleware(runtime),
+ *   onRequest: createI18nMiddleware(runtime),
  * });
  * ```
  *
@@ -45,7 +45,7 @@ type MiddlewareFn = (event: MiddlewareEvent) => void | Promise<void>;
  * @param runtime - Your compiled `./paraglide/runtime.js` module
  * @param options  - Optional configuration
  */
-export function createParaglideMiddleware<Locale extends string>(
+export function createI18nMiddleware<Locale extends string>(
   runtime: ParaglideRuntime<Locale>,
   options: {
     /**
