@@ -129,15 +129,15 @@ import * as m from "./paraglide/messages";
 
 const i18n = createI18n(runtime);
 export const { locale, setLocale } = i18n;
-export const translateError = createErrorTranslator(m);
+export const t = createErrorTranslator(m);
 ```
 
 ### Supported error shapes
 
 | Library | Error type | Supported           |
-|---------|---|---------------------|
-| Valibot | `string` | ✓                   |
-| Yup     | `string` | ✓ (⚠️NOT TESTED!!!) |
+|---------|------------|---------------------|
+| Valibot | `string`   | ✓                   |
+| Yup     | `string`   | ✓ (⚠️NOT TESTED!!!) |
 
 ### Schema — use keys instead of translated strings
 
@@ -182,18 +182,18 @@ export const contactSchema = v.object({
 
 Then recompile: `npm run paraglide`
 
-### Component — use `translateError` when rendering errors
+### Component — use `t` when rendering errors
 
 ```tsx
-import { translateError } from "../i18n";
+import { t } from "../i18n";
 
 // Valibot
 <Show when={field.isTouched && field.errors}>
-  <p class="error-msg">{translateError(field.errors![0])}</p>
+  <p class="error-msg">{t(field.errors![0])}</p>
 </Show>
 ```
 
-`translateError` looks up the key on the messages module at render time. If it matches a message key it calls that function reactively. Otherwise returns the string as-is.
+`t` looks up the key on the messages module at render time. If it matches a message key it calls that function reactively. Otherwise, returns the string as-is.
 
 ---
 
@@ -238,7 +238,7 @@ import * as m from "./paraglide/messages";
 
 export const i18n = createI18n(runtime);
 export const { locale, setLocale } = i18n;
-export const translateError = createErrorTranslator(m);
+export const t = createErrorTranslator(m);
 
 // Per-request locale resolution during SSR
 createServerI18n(runtime, getRequestEvent);
@@ -250,18 +250,18 @@ createServerI18n(runtime, getRequestEvent);
 
 ### `createI18n(runtime)` → `I18nInstance`
 
-| Return         | Type | Description |
-|----------------|---|---|
-| `locale`       | `Accessor<Locale>` | Reactive locale signal |
-| `setLocale`    | `(locale: Locale) => void` | Updates signal + writes cookie, no page reload |
-| `I18nProvider` | `(props) => JSX.Element` | Context provider — same signal, no duplication |
-| `useI18n`      | `() => { locale, setLocale }` | Hook for components inside `<I18nProvider>` |
+| Return         | Type                          | Description                                    |
+|----------------|-------------------------------|------------------------------------------------|
+| `locale`       | `Accessor<Locale>`            | Reactive locale signal                         |
+| `setLocale`    | `(locale: Locale) => void`    | Updates signal + writes cookie, no page reload |
+| `I18nProvider` | `(props) => JSX.Element`      | Context provider — same signal, no duplication |
+| `useI18n`      | `() => { locale, setLocale }` | Hook for components inside `<I18nProvider>`    |
 
 ### `createErrorTranslator(m)` → `(error) => string`
 
 From `paraglide-solid/valibot`. Pass your compiled `* as m` messages module.
 
-Accepts `string`, `{ message: string }`, `null`, or `undefined`. If the extracted string matches a message key it calls that function reactively. Otherwise returns the string as-is.
+Accepts `string`, `{ message: string }`, `null`, or `undefined`. If the extracted string matches a message key it calls that function reactively. Otherwise, returns the string as-is.
 
 ### `createServerI18n(runtime, getRequestEvent)`
 
@@ -271,21 +271,21 @@ From `paraglide-solid/server`. Overwrites Paraglide's `getLocale` to read from `
 
 From `paraglide-solid/middleware`. Returns a SolidStart `onRequest` handler.
 
-| Option | Default | Description |
-|---|---|---|
-| `cookieName` | `"PARAGLIDE_LOCALE"` | Cookie name |
-| `cookieMaxAge` | `34560000` | Cookie expiry in seconds |
-| `refreshCookie` | `false` | Refresh cookie on every request |
+| Option          | Default              | Description                     |
+|-----------------|----------------------|---------------------------------|
+| `cookieName`    | `"PARAGLIDE_LOCALE"` | Cookie name                     |
+| `cookieMaxAge`  | `34560000`           | Cookie expiry in seconds        |
+| `refreshCookie` | `false`              | Refresh cookie on every request |
 
 ---
 
 ## Migration from `@inlang/paraglide-solidstart`
 
-| Old | New                                                           |
-|---|---------------------------------------------------------------|
-| `import { useI18n } from "@inlang/paraglide-solidstart"` | `import { createI18n } from "paraglide-solid"`           |
-| `useI18n().locale` | `locale` (signal from `createI18n`)                              |
-| `useI18n().setLocale("de")` | `setLocale("de")`                                             |
+| Old                                                       | New                                                      |
+|-----------------------------------------------------------|----------------------------------------------------------|
+| `import { useI18n } from "@inlang/paraglide-solidstart"`  | `import { createI18n } from "paraglide-solid"`           |
+| `useI18n().locale`                                        | `locale` (signal from `createI18n`)                      |
+| `useI18n().setLocale("de")`                               | `setLocale("de")`                                        |
 | Middleware from `@inlang/paraglide-solidstart/middleware` | `createI18nMiddleware` from `paraglide-solid/middleware` |
 
 ---

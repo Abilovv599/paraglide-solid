@@ -27,15 +27,13 @@
  */
 
 import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
+import type { FetchEvent } from "@solidjs/start/server";
 
 /**
  * Minimal shape of SolidStart's `RequestEvent` that we depend on.
  * Avoids a hard dependency on `@solidjs/start`.
  */
-interface RequestEvent {
-  locals: Record<string, unknown>;
-}
-
+type RequestEvent = Pick<FetchEvent, "locals">;
 type GetRequestEvent = () => RequestEvent | undefined;
 
 const LOCALE_KEY = "__paraglide_locale__";
@@ -119,4 +117,3 @@ export function setLocaleFromRequest<Locale extends string>(
 }
 
 export { LOCALE_KEY };
-export type { RequestEvent, GetRequestEvent };

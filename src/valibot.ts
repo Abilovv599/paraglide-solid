@@ -18,7 +18,7 @@
  * import { createErrorTranslator } from "paraglide-solid/valibot";
  *
  * export const { locale, setLocale } = createI18n(runtime);
- * export const translateError = createErrorTranslator(m);
+ * export const t = createErrorTranslator(m);
  * ```
  *
  * ## Schema
@@ -35,9 +35,9 @@
  * ## Component
  *
  * ```tsx
- * import { translateError } from "../i18n";
+ * import { t } from "../i18n";
  *
- * <p class="error-msg">{translateError(field.errors![0])}</p>
+ * <p class="error-msg">{t(field.errors![0])}</p>
  * ```
  */
 
@@ -52,7 +52,7 @@ type MessageKeys<T> = Extract<
 >;
 
 /**
- * Create a `translateError` function bound to your Paraglide messages module.
+ * Create a `t` function bound to your Paraglide messages module.
  *
  * Pass your entire `* as m` import — the translator will look up the error
  * string as a key on the module at call time, so it's always reactive and
@@ -67,13 +67,13 @@ type MessageKeys<T> = Extract<
  * ```ts
  * import * as m from "./paraglide/messages";
  *
- * export const translateError = createErrorTranslator(m);
+ * export const t = createErrorTranslator(m);
  *
  * // In schema:
  * v.minLength(2, "errNameMin")
  *
  * // In component:
- * <p>{translateError(field.errors![0])}</p>
+ * <p>{t(field.errors![0])}</p>
  * ```
  */
 export function createErrorTranslator<T extends Record<string, unknown>>(messages: T) {
