@@ -1,5 +1,5 @@
 /**
- * paraglide-solid
+ * @inlang/paraglide-solid
  *
  * SolidJS + SolidStart integration for @inlang/paraglide-js.
  *
@@ -12,7 +12,7 @@
  * ```tsx
  * // src/i18n.ts
  * import * as runtime from "./paraglide/runtime";
- * import { createI18n } from "paraglide-solid";
+ * import { createI18n } from "@inlang/paraglide-solid";
  *
  * export const { locale, setLocale } = createI18n(runtime);
  * ```
@@ -31,7 +31,7 @@ import type { I18nInstance } from "./types";
  *
  * ```ts
  * // src/i18n.ts
- * import { createI18n } from "paraglide-solid";
+ * import { createI18n } from "@inlang/paraglide-solid";
  * import * as runtime from "./paraglide/runtime";
  *
  * export const i18n = createI18n(runtime);
@@ -74,7 +74,7 @@ export function createI18n<Locale extends string>(runtime: ParaglideRuntime): I1
     const ctx = useContext(I18nContext);
     if (!ctx)
       throw new Error(
-        "[paraglide-solid] useI18n() called outside <I18nProvider>.\n" +
+        "[@inlang/paraglide-solid] useI18n() called outside <I18nProvider>.\n" +
           "Wrap your app root with <I18nProvider>.",
       );
     return ctx;

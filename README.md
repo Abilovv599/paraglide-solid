@@ -1,4 +1,4 @@
-# paraglide-solid
+# @inlang/paraglide-solid
 
 SolidJS + SolidStart integration for [`@inlang/paraglide-js`](https://inlang.com/m/gerre34r/library-inlang-paraglideJs).
 
@@ -15,7 +15,7 @@ There is a **single signal** for the entire app. `locale`, `setLocale`, `<I18nPr
 ## Installation
 
 ```bash
-npm install paraglide-solid
+npm install @inlang/paraglide-solid
 # peer deps
 npm install @inlang/paraglide-js solid-js
 ```
@@ -54,7 +54,7 @@ export default defineConfig({
 
 ```ts
 // src/i18n.ts
-import { createI18n } from "paraglide-solid";
+import { createI18n } from "@inlang/paraglide-solid";
 import * as runtime from "./paraglide/runtime";
 
 const i18n = createI18n(runtime);
@@ -116,14 +116,14 @@ function LocaleSwitcher() {
 
 ## Validation error translation
 
-For reactive validation errors, import `createErrorTranslator` from `paraglide-solid/valibot`. For now works only with validation libraries like: Valibot and Yup.
+For reactive validation errors, import `createErrorTranslator` from `@inlang/paraglide-solid/valibot`. For now works only with validation libraries like: Valibot and Yup.
 
 ### Setup
 
 ```ts
 // src/i18n.ts
-import { createI18n } from "paraglide-solid";
-import { createErrorTranslator } from "paraglide-solid/valibot";
+import { createI18n } from "@inlang/paraglide-solid";
+import { createErrorTranslator } from "@inlang/paraglide-solid/valibot";
 import * as runtime from "./paraglide/runtime";
 import * as m from "./paraglide/messages";
 
@@ -205,7 +205,7 @@ Create `src/middleware.ts`:
 
 ```ts
 import { createMiddleware } from "@solidjs/start/middleware";
-import { createI18nMiddleware } from "paraglide-solid/middleware";
+import { createI18nMiddleware } from "@inlang/paraglide-solid/middleware";
 import * as runtime from "./paraglide/runtime";
 
 export default createMiddleware({
@@ -229,9 +229,9 @@ In your `src/i18n.ts`, additionally call `createServerI18n` so SSR message calls
 
 ```ts
 // src/i18n.ts
-import { createI18n } from "paraglide-solid";
-import { createServerI18n } from "paraglide-solid/server";
-import { createErrorTranslator } from "paraglide-solid/valibot";
+import { createI18n } from "@inlang/paraglide-solid";
+import { createServerI18n } from "@inlang/paraglide-solid/server";
+import { createErrorTranslator } from "@inlang/paraglide-solid/valibot";
 import * as runtime from "./paraglide/runtime";
 import * as m from "./paraglide/messages";
 
@@ -259,18 +259,18 @@ createServerI18n(runtime);
 [//]: # (### `createErrorTranslator&#40;m&#41;` → `&#40;error&#41; => string`)
 
 [//]: # ()
-[//]: # (From `paraglide-solid/valibot`. Pass your compiled `* as m` messages module.)
+[//]: # (From `@inlang/paraglide-solid/valibot`. Pass your compiled `* as m` messages module.)
 
 [//]: # ()
 [//]: # (Accepts `string`, `null`, or `undefined`. If the extracted string matches a message key it calls that function reactively. Otherwise, returns the string as-is.)
 
 ### `createServerI18n(runtime)`
 
-From `paraglide-solid/server`. Overwrites Paraglide's `getLocale` to read from `event.locals` during SSR. Falls back gracefully on the client.
+From `@inlang/paraglide-solid/server`. Overwrites Paraglide's `getLocale` to read from `event.locals` during SSR. Falls back gracefully on the client.
 
 ### `createI18nMiddleware(runtime, options?)`
 
-From `paraglide-solid/middleware`. Returns a SolidStart `onRequest` handler.
+From `@inlang/paraglide-solid/middleware`. Returns a SolidStart `onRequest` handler.
 
 | Option          | Default              | Description                     |
 |-----------------|----------------------|---------------------------------|
@@ -284,10 +284,10 @@ From `paraglide-solid/middleware`. Returns a SolidStart `onRequest` handler.
 
 | Old                                                       | New                                                      |
 |-----------------------------------------------------------|----------------------------------------------------------|
-| `import { useI18n } from "@inlang/paraglide-solidstart"`  | `import { createI18n } from "paraglide-solid"`           |
+| `import { useI18n } from "@inlang/paraglide-solidstart"`  | `import { createI18n } from "@inlang/paraglide-solid"`           |
 | `useI18n().locale`                                        | `locale` (signal from `createI18n`)                      |
 | `useI18n().setLocale("de")`                               | `setLocale("de")`                                        |
-| Middleware from `@inlang/paraglide-solidstart/middleware` | `createI18nMiddleware` from `paraglide-solid/middleware` |
+| Middleware from `@inlang/paraglide-solidstart/middleware` | `createI18nMiddleware` from `@inlang/paraglide-solid/middleware` |
 
 ---
 

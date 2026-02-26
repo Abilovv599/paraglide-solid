@@ -1,5 +1,5 @@
 /**
- * paraglide-solid/middleware
+ * @inlang/paraglide-solid/middleware
  *
  * SolidStart middleware factory for Paraglide locale detection.
  *
@@ -8,7 +8,7 @@
  * ```ts
  * // src/middleware.ts  (SolidStart entry point for server middleware)
  * import { createMiddleware } from "@solidjs/start/middleware";
- * import { createI18nMiddleware } from "paraglide-solid/middleware";
+ * import { createI18nMiddleware } from "@inlang/paraglide-solid/middleware";
  * import * as runtime from "./paraglide/runtime";
  *
  * export default createMiddleware({
