@@ -43,6 +43,14 @@
 
 import type { MessageFunction } from "@inlang/paraglide-js";
 
+/** Keep only keys whose values are MessageFunction */
+type MessageKeys<T> = Extract<
+  {
+    [K in keyof T]: T[K] extends MessageFunction ? K : never;
+  }[keyof T],
+  string
+>;
+
 /**
  * Create a `translateError` function bound to your Paraglide messages module.
  *
@@ -68,14 +76,16 @@ import type { MessageFunction } from "@inlang/paraglide-js";
  * <p>{translateError(field.errors![0])}</p>
  * ```
  */
-export function createErrorTranslator(
-  messages: Record<string, MessageFunction>,
-): (error: string) => string {
-  return (error: string): string => {
-    const fn = messages[error];
+export function createErrorTranslator<T extends Record<string, unknown>>(messages: T) {
+  type Keys = MessageKeys<T>;
+
+  return (error: Keys | string): string => {
+    const fn = messages[error as keyof T];
+
     if (typeof fn === "function") {
-      return fn() as string;
+      return (fn as MessageFunction)();
     }
+
     return error;
   };
 }
