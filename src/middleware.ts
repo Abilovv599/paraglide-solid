@@ -24,7 +24,6 @@
 
 import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
 import type { MiddlewareFn } from "@solidjs/start/middleware";
-import type { FetchEvent as MiddlewareEvent } from "@solidjs/start/server";
 import { LOCALE_KEY, setLocaleFromRequest } from "./server";
 
 /**
@@ -60,7 +59,7 @@ export function createI18nMiddleware(
     refreshCookie = false,
   } = options;
 
-  return async (event: MiddlewareEvent) => {
+  return async (event) => {
     const locale = setLocaleFromRequest(event.request, event, runtime);
 
     // Optionally refresh the cookie on each request so it doesn't expire

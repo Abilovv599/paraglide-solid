@@ -129,7 +129,7 @@ import * as m from "./paraglide/messages";
 
 const i18n = createI18n(runtime);
 export const { locale, setLocale } = i18n;
-export const t = createErrorTranslator(m);
+export const { errorKey, ErrorMessage } = createErrorTranslator(m);
 ```
 
 ### Supported error shapes
@@ -147,13 +147,13 @@ import * as v from "valibot";
 
 export const contactSchema = v.object({
   name: v.pipe(
-    v.string("errNameRequired"),
-    v.minLength(2, "errNameMin"),
+    v.string(errorKey("errNameRequired")),
+    v.minLength(2, errorKey("errNameMin")),
   ),
   email: v.pipe(
     v.string(),
-    v.nonEmpty("errEmailRequired"),
-    v.email("errEmailInvalid"),
+    v.nonEmpty(errorKey("errEmailRequired")),
+    v.email(errorKey("errEmailInvalid")),
   ),
 });
 ```
@@ -182,18 +182,18 @@ export const contactSchema = v.object({
 
 Then recompile: `npm run paraglide`
 
-### Component — use `t` when rendering errors
+### Component — use `errorMessage` when rendering errors
 
 ```tsx
-import { t } from "../i18n";
+import { errorMessage } from "../i18n";
 
 // Valibot
 <Show when={field.isTouched && field.errors}>
-  <p class="error-msg">{t(field.errors![0])}</p>
+  <p class="error-msg">{errorMessage(field.errors)}</p>
 </Show>
 ```
 
-`t` looks up the key on the messages module at render time. If it matches a message key it calls that function reactively. Otherwise, returns the string as-is.
+`errorMessage` looks up the key on the messages module at render time. If it matches a message key it calls that function reactively. Otherwise, returns the string as-is.
 
 ---
 
@@ -232,16 +232,15 @@ In your `src/i18n.ts`, additionally call `createServerI18n` so SSR message calls
 import { createI18n } from "paraglide-solid";
 import { createServerI18n } from "paraglide-solid/server";
 import { createErrorTranslator } from "paraglide-solid/valibot";
-import { getRequestEvent } from "@solidjs/start/server";
 import * as runtime from "./paraglide/runtime";
 import * as m from "./paraglide/messages";
 
 export const i18n = createI18n(runtime);
 export const { locale, setLocale } = i18n;
-export const t = createErrorTranslator(m);
+export const { errorKey, ErrorMessage } = createErrorTranslator(m);
 
 // Per-request locale resolution during SSR
-createServerI18n(runtime, getRequestEvent);
+createServerI18n(runtime);
 ```
 
 ---
@@ -257,13 +256,15 @@ createServerI18n(runtime, getRequestEvent);
 | `I18nProvider` | `(props) => JSX.Element`      | Context provider — same signal, no duplication |
 | `useI18n`      | `() => { locale, setLocale }` | Hook for components inside `<I18nProvider>`    |
 
-### `createErrorTranslator(m)` → `(error) => string`
+[//]: # (### `createErrorTranslator&#40;m&#41;` → `&#40;error&#41; => string`)
 
-From `paraglide-solid/valibot`. Pass your compiled `* as m` messages module.
+[//]: # ()
+[//]: # (From `paraglide-solid/valibot`. Pass your compiled `* as m` messages module.)
 
-Accepts `string`, `{ message: string }`, `null`, or `undefined`. If the extracted string matches a message key it calls that function reactively. Otherwise, returns the string as-is.
+[//]: # ()
+[//]: # (Accepts `string`, `null`, or `undefined`. If the extracted string matches a message key it calls that function reactively. Otherwise, returns the string as-is.)
 
-### `createServerI18n(runtime, getRequestEvent)`
+### `createServerI18n(runtime)`
 
 From `paraglide-solid/server`. Overwrites Paraglide's `getLocale` to read from `event.locals` during SSR. Falls back gracefully on the client.
 

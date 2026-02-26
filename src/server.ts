@@ -27,14 +27,7 @@
  */
 
 import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
-import type { FetchEvent } from "@solidjs/start/server";
-
-/**
- * Minimal shape of SolidStart's `RequestEvent` that we depend on.
- * Avoids a hard dependency on `@solidjs/start`.
- */
-type RequestEvent = Pick<FetchEvent, "locals">;
-type GetRequestEvent = () => RequestEvent | undefined;
+import { getRequestEvent, type RequestEvent } from "solid-js/web";
 
 const LOCALE_KEY = "__paraglide_locale__";
 
@@ -47,12 +40,8 @@ const LOCALE_KEY = "__paraglide_locale__";
  * (cookie / globalVariable strategy).
  *
  * @param runtime - Your compiled `./paraglide/runtime.js` module
- * @param getRequestEvent - SolidStart's `getRequestEvent` from `@solidjs/start/server`
  */
-export function createServerI18n<Locale extends string>(
-  runtime: ParaglideRuntime,
-  getRequestEvent: GetRequestEvent,
-): void {
+export function createServerI18n<Locale extends string>(runtime: ParaglideRuntime): void {
   runtime.overwriteGetLocale(() => {
     const event = getRequestEvent();
     if (event) {

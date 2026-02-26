@@ -18,7 +18,7 @@
  * import { createErrorTranslator } from "paraglide-solid/valibot";
  *
  * export const { locale, setLocale } = createI18n(runtime);
- * export const t = createErrorTranslator(m);
+ * export const { errorKey, errorMessage } = createErrorTranslator(m);
  * ```
  *
  * ## Schema
@@ -26,8 +26,8 @@
  * ```ts
  * const schema = v.object({
  *   name: v.pipe(
- *     v.string("errNameRequired"),
- *     v.minLength(2, "errNameMin"),
+ *     v.string(errorKey("errNameRequired")),
+ *     v.minLength(2, errorKey("errNameMin")),
  *   ),
  * });
  * ```
@@ -35,15 +35,18 @@
  * ## Component
  *
  * ```tsx
- * import { t } from "../i18n";
+ * import { errorMessage } from "../i18n";
  *
- * <p class="error-msg">{t(field.errors![0])}</p>
+ * <p class="error-msg">{errorMessage(field.errors)}</p>
  * ```
  */
 
-import type { MessageFunction } from "@inlang/paraglide-js";
+import type { LocalizedString, MessageFunction } from "@inlang/paraglide-js";
 
-/** Keep only keys whose values are MessageFunction */
+type ErrorTuple = [string, ...string[]] | null;
+
+type ExtractError<E> = E extends [infer K, ...unknown[]] ? K : never;
+
 type MessageKeys<T> = Extract<
   {
     [K in keyof T]: T[K] extends MessageFunction ? K : never;
@@ -67,25 +70,32 @@ type MessageKeys<T> = Extract<
  * ```ts
  * import * as m from "./paraglide/messages";
  *
- * export const t = createErrorTranslator(m);
+ * export const { errorKey, errorMessage } = createErrorTranslator(m);
  *
  * // In schema:
- * v.minLength(2, "errNameMin")
+ * v.minLength(2, errorKey("errNameMin"))
  *
  * // In component:
- * <p>{t(field.errors![0])}</p>
+ * <p>{errorMessage(field.errors)}</p>
  * ```
  */
 export function createErrorTranslator<T extends Record<string, unknown>>(messages: T) {
   type Keys = MessageKeys<T>;
 
-  return (error: Keys | string): string => {
+  const errorKey = <K extends Keys>(key: K): K => key;
+
+  function errorMessage<F extends ErrorTuple>(errors: F): LocalizedString | ExtractError<F> | null {
+    const error = errors?.[0];
+    if (!error) return null;
+
     const fn = messages[error as keyof T];
 
     if (typeof fn === "function") {
       return (fn as MessageFunction)();
     }
 
-    return error;
-  };
+    return error as ExtractError<F>;
+  }
+
+  return { errorKey, errorMessage };
 }
