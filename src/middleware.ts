@@ -23,7 +23,7 @@
  */
 
 import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
-import type { MiddlewareFn } from "@solidjs/start/middleware";
+import type { RequestMiddleware } from "@solidjs/start/middleware"
 import { LOCALE_KEY, setLocaleFromRequest } from "./server";
 
 /**
@@ -52,7 +52,7 @@ export function createI18nMiddleware(
      */
     refreshCookie?: boolean;
   } = {},
-): MiddlewareFn {
+): RequestMiddleware {
   const {
     cookieName = "PARAGLIDE_LOCALE",
     cookieMaxAge = 34_560_000,
