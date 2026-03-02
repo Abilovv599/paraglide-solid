@@ -23,7 +23,7 @@
  */
 
 import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
-import type { RequestMiddleware } from "@solidjs/start/middleware"
+import type { RequestMiddleware } from "@solidjs/start/middleware";
 import { LOCALE_KEY, setLocaleFromRequest } from "./server";
 
 /**
