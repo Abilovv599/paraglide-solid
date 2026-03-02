@@ -40,18 +40,18 @@ import type { I18nInstance } from "./types";
  * export const { locale, setLocale } = i18n;
  * ```
  */
-export function createI18n<Locale extends string>(runtime: ParaglideRuntime): I18nInstance<Locale> {
+export function createI18n<T extends ParaglideRuntime>(runtime: T): I18nInstance<T> {
   // Trigger Paraglide's one-time initialization before we overwrite anything.
-  const initialLocale: Locale = runtime.getLocale();
-  let currentLocale: Locale = initialLocale;
+  const initialLocale: T = runtime.getLocale();
+  let currentLocale: T = initialLocale;
 
   // Single signal — shared by the returned accessors AND the context.
-  const [_locale, _setLocale] = createSignal<Locale>(initialLocale);
+  const [_locale, _setLocale] = createSignal<T>(initialLocale);
 
   // Overwrite getLocale so message functions read our signal and become reactive.
   runtime.overwriteGetLocale(() => _locale());
 
-  const setLocale = (newLocale: Locale): void => {
+  const setLocale = (newLocale: T): void => {
     if (newLocale === currentLocale) return;
     currentLocale = newLocale;
     runtime.setLocale(newLocale, { reload: false });
@@ -60,8 +60,8 @@ export function createI18n<Locale extends string>(runtime: ParaglideRuntime): I1
 
   // Context holds references to the SAME signal — not a copy.
   const I18nContext = createContext<{
-    locale: Accessor<Locale>;
-    setLocale: (locale: Locale) => void;
+    locale: Accessor<T>;
+    setLocale: (locale: T) => void;
   }>();
 
   const I18nProvider = (props: { children: JSX.Element }) => (

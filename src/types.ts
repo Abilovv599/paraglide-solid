@@ -1,15 +1,16 @@
+import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
 import type { Accessor, JSX } from "solid-js";
 
 /**
  * The full Paraglide bridge instance returned by `createI18n()`.
  * Contains everything you need to integrate Paraglide with SolidJS.
  */
-export interface I18nInstance<Locale extends string> {
+export interface I18nInstance<T extends ParaglideRuntime> {
   /** Reactive accessor for the current locale. */
-  locale: Accessor<Locale>;
+  locale: Accessor<T>;
 
   /** Set locale — writes cookie + updates signal, no page reload. */
-  setLocale: (newLocale: Locale) => void;
+  setLocale: (newLocale: T) => void;
 
   /**
    * Context provider — wraps a subtree so any component inside can call
@@ -47,7 +48,7 @@ export interface I18nInstance<Locale extends string> {
    * ```
    */
   useI18n: () => {
-    locale: Accessor<Locale>;
-    setLocale: (locale: Locale) => void;
+    locale: Accessor<T>;
+    setLocale: (locale: T) => void;
   };
 }
