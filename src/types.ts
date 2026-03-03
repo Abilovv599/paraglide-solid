@@ -1,18 +1,15 @@
-import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
 import type { Accessor, JSX } from "solid-js";
-
-export type InferLocale<T extends ParaglideRuntime> = T["locales"][number];
 
 /**
  * The full Paraglide bridge instance returned by `createI18n()`.
  * Contains everything you need to integrate Paraglide with SolidJS.
  */
-export interface I18nInstance<T extends string> {
+export interface I18nInstance<Locale extends string> {
   /** Reactive accessor for the current locale. */
-  locale: Accessor<T>;
+  locale: Accessor<Locale>;
 
   /** Set locale — writes cookie + updates signal, no page reload. */
-  setLocale: (newLocale: T) => void;
+  setLocale: (newLocale: Locale) => void;
 
   /**
    * Context provider — wraps a subtree so any component inside can call
@@ -49,8 +46,19 @@ export interface I18nInstance<T extends string> {
    * }
    * ```
    */
-  useI18n: () => {
-    locale: Accessor<T>;
-    setLocale: (locale: T) => void;
-  };
+  useI18n: () => { locale: Accessor<Locale>; setLocale: (locale: Locale) => void };
+}
+
+/**
+ * Minimal shape of the Paraglide runtime module that this package depends on.
+ * Users pass their compiled `./paraglide/runtime.js` as a generic parameter
+ * so we stay decoupled from any specific project's locale union type.
+ */
+export interface ParaglideRuntime<Locale extends string = string> {
+  getLocale: () => Locale;
+  setLocale: (locale: Locale, options?: { reload?: boolean }) => void;
+  overwriteGetLocale: (fn: () => Locale) => void;
+  overwriteSetLocale: (fn: (locale: Locale, options?: { reload?: boolean }) => void) => void;
+  baseLocale: Locale;
+  locales: readonly Locale[];
 }
