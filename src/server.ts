@@ -26,8 +26,8 @@
  * SolidStart's per-request event during SSR, and from the signal on the client.
  */
 
-import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
 import { getRequestEvent, type RequestEvent } from "solid-js/web";
+import {ParaglideRuntime} from "./types";
 
 const LOCALE_KEY = "__paraglide_locale__";
 
