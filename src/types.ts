@@ -1,11 +1,13 @@
 import type { Runtime as ParaglideRuntime } from "@inlang/paraglide-js";
 import type { Accessor, JSX } from "solid-js";
 
+export type InferLocale<T extends ParaglideRuntime> = T["locales"][number];
+
 /**
  * The full Paraglide bridge instance returned by `createI18n()`.
  * Contains everything you need to integrate Paraglide with SolidJS.
  */
-export interface I18nInstance<T extends ParaglideRuntime> {
+export interface I18nInstance<T extends string> {
   /** Reactive accessor for the current locale. */
   locale: Accessor<T>;
 
